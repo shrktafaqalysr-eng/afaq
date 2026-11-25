@@ -2179,7 +2179,7 @@ var _acVSbx27=acVSbx;acVSbx=function(){var h=_acVSbx27();Object.keys(AC.sbox||{}
 </script>
 <script>
 /* ===== برنامج المدير كأيقونة على الإنترنت (نسخة وحدة، تتحدث بدون ملفات) ===== */
-var AC_VER="v43";
+var AC_VER="v44";
 var AC_ONLINE=/^https?:$/.test(location.protocol)&&/\/admin\/?(index\.html)?$/.test(location.pathname);
 function acAdmUrl(){if(AC_ONLINE)return location.origin+location.pathname.replace(/index\.html$/,"");return siteUrl()+"admin/"}
 function acAdmTransform(t){var shim='<script>(function(){var P="adm:",S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem,k=S.key;S.getItem=function(x){return g.call(this,P+x)};S.setItem=function(x,v){return s.call(this,P+x,v)};S.removeItem=function(x){return r.call(this,P+x)};S.clear=function(){for(var i=this.length-1;i>=0;i--){var q=k.call(this,i);if(q&&q.indexOf(P)==0)r.call(this,q)}}})()<\/script><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#14110b"><link rel="apple-touch-icon" href="../icon-180.png">';
@@ -2201,6 +2201,14 @@ function acAdmCard(){var h=AC_ONLINE?
  return '<div id="admc" class="kp noprint" style="margin-top:12px">'+h+'<div id="admst" style="margin-top:6px;font-size:14px"></div></div>'}
 (function(){var p=document.getElementById("pub");if(p)p.insertAdjacentHTML("beforeend",acAdmCard())})();
 if(AC_ONLINE){try{document.title="آفاق اليسر — المدير"}catch(e){}}
+
+</script>
+<script>
+/* ===== نقل رمز المجهزين بسهولة: لصق رابط المجهزين بدل الرمز + الاسترجاع يكمّل الإعدادات الناقصة ===== */
+function acStfFromLink(v){v=String(v||"").trim();if(!v||/^github_pat_|^ghp_/.test(v))return null;try{var m=v.match(/k=([^&\s#]+)/),x=JSON.parse(acDec(decodeURIComponent(m?m[1]:v)));if(x&&x.t)return x}catch(e){}return null}
+var _acSS29=acStfSave;acStfSave=function(){var e=document.getElementById("acdt"),x=e&&acStfFromLink(e.value);if(x){e.value=x.t;var r=document.getElementById("acdr");if(r&&x.r&&!r.value.trim())r.value=x.r;msg("✅ طلّعت رمز المجهزين من الرابط")}return _acSS29.apply(this,arguments)};
+var _acBL29=bkLoad;bkLoad=function(inp){var f=inp&&inp.files&&inp.files[0];if(f){var rd=new FileReader();rd.onload=function(){try{var o=JSON.parse(rd.result),d=o&&o.data;if(d&&d.afaq_gh){var B=JSON.parse(d.afaq_gh);setTimeout(function(){var C={};try{C=JSON.parse(localStorage.getItem("afaq_gh")||"{}")}catch(e){}var ch=0;Object.keys(B).forEach(function(k){if((C[k]==null||C[k]==="")&&B[k]!=null&&B[k]!==""){C[k]=B[k];ch=1}});if(ch)localStorage.setItem("afaq_gh",JSON.stringify(C))},120)}}catch(e){}};rd.readAsText(f)}return _acBL29.apply(this,arguments)};
+(function(){var e=document.getElementById("acdt");if(e)e.placeholder="رمز staff أو الصق رابط المجهزين"})();
 
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})</script></body>
