@@ -500,6 +500,10 @@ function siRow2(i){var r=SI.rows[i],a=Math.round((parseFloat(r.c)||0)*(parseFloa
 function siUpd2(){if(!SI)return;var T=siTot(),g=$("sitg");if(g)g.textContent=nf(T.net);var e=$("siaf");if(!e)return;var c=shCus(SI.cn.trim()),ob=c?c.b:0,sg=SI.it=="sret"?-1:1,af=SI.id?ob:ob+sg*T.rem;
  e.innerHTML='<span>'+(SI.id?"حسابه هسه":"الحساب بعدها")+'</span><b style="color:'+(af>0?"#c0392b":"#1e8449")+'">'+bTx(af)+'</b>'}
 siUpd=siUpd2;
+var _siDel38=siDel;siDel=async function(){var t=SI&&SL[SI.id]&&SL[SI.id].data,no=t&&t.no;await _siDel38.apply(this,arguments);var t2=t&&SL[t.id]&&SL[t.id].data;if(no&&t2&&t2.status=="del"){try{var r=await upd("jobs/"+no+".json",function(f){f.closed=1;f.del=1});J[String(no)]={sha:r.sha,data:r.data};localStorage.setItem("stf_j",JSON.stringify(J))}catch(e){}render()}};
+function shDelNos(){var D={};Object.keys(SL).forEach(function(k){var t=SL[k].data;if(t&&t.status=="del"&&t.no)D[String(t.no)]=1});return D}
+var _vJobs38=vJobs;vJobs=function(){var D=shDelNos(),H={};Object.keys(J).forEach(function(k){var d=J[k].data;if(d&&(d.del||D[String(d.no)])){H[k]=J[k];delete J[k]}});try{return _vJobs38.apply(this,arguments)}finally{Object.keys(H).forEach(function(k){J[k]=H[k]})}};
+var _shopSync38=shopSync;shopSync=async function(){await _shopSync38.apply(this,arguments);var D=shDelNos();for(var k in D){var j=J[k];if(j&&j.data&&!j.data.closed){try{var r=await upd("jobs/"+k+".json",function(f){f.closed=1;f.del=1});J[k]={sha:r.sha,data:r.data}}catch(e){}}}};
 var _siNew38=siNew;siNew=function(){SIX=-1;SQ="";return _siNew38.apply(this,arguments)};
 var _siAdd38=siAdd;siAdd=function(id){_siAdd38.apply(this,arguments);setTimeout(function(){var q=$("siq");if(q){q.scrollIntoView({block:"center"})}},50)};
 
