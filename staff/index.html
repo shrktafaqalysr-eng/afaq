@@ -344,6 +344,13 @@ async function xSave(id){var F=XEF,a=parseFloat(F.m),A=(PERM.acc||[]).filter(fun
  catch(e){msg(e=="lock"?"🔒 الصفحة متطابقة، ما تنعدل":e=="st"?"هذا المصروف المدير شاله أو انحذف":"ما انحفظ، تأكد من الإنترنت")}}
 xCancel=async function(id){try{var r=await upd("exp/"+id+".json",function(f){if(xLocked(xDay(f)))throw "lock";if(xLive(f)){f.status="cancel";f.v=(f.v||0)+1;f.cancelAt=Date.now()}});XP[id]={sha:r.sha,data:r.data};localStorage.setItem("stf_xp",JSON.stringify(XP));msg("🗑 انحذف");render()}catch(e){msg(e=="lock"?"🔒 الصفحة متطابقة، ما تنحذف":"ما انحفظ، تأكد من الإنترنت")}};
 
+/* ===== الرصيد: الموجب بذمتي، السالب الشركة تطلبه إلي ===== */
+function boxLine(v,c){var t=c=="USD"?0.005:0.5,u=c=="USD"?" $":" د.ع";if(v<-t)return {k:-1,s:nf(-v,c)+u};if(v>t)return {k:1,s:nf(v,c)+u};return {k:0,s:"0"+u}}
+boxHead=function(){var b=boxBal(),I=boxLine(b.IQD,"IQD"),U=b.USD?boxLine(b.USD,"USD"):null,neg=I.k<0;
+ var lab=neg?'💰 إلي عند الشركة (صرفت من جيبي)':I.k>0?'👛 بذمتي (فلوس الشركة عندي)':'👛 صندوقي';
+ return '<div class="card" style="background:'+(neg?'#0f3d24':'#17140d')+';color:'+(neg?'#b9f5cf':'#e6c274')+';border-color:'+(neg?'#1e8449':'#c9a24b')+'"><div style="font-size:14px">'+lab+'</div><div style="font-size:26px;font-weight:800">'+I.s+(U?' · '+(U.k<0?'إلي ':'')+U.s:'')+'</div>'+(neg?'<div style="font-size:12px;opacity:.85">المدير راح يرجعلك هذا المبلغ</div>':'')+'</div>'+
+ '<div class="tb"><button class="'+(CMODE=="exp"?"on":"")+'" onclick="CMODE=\'exp\';render()">💸 صرف</button><button class="'+(CMODE=="rc"?"on":"")+'" onclick="CMODE=\'rc\';render()">💵 قبض من زبون</button></div>'};
+
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
 var INOTHER=SA0&&!AIN&&!navigator.standalone&&localStorage.getItem("stf_inst")!="1",SA=SA0&&!INOTHER,IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform=="MacIntel"&&navigator.maxTouchPoints>1),DP=null;
