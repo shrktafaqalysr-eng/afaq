@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v86";
+var STF_VER="v87";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -585,13 +585,20 @@ var TED=null;
 function tEdLog(t){if(!t.ed||!t.ed.length)return "";return '<div style="font-size:13px;color:#8a6d1f;margin-top:4px">'+t.ed.map(function(e){var r=t.rows.filter(function(y){return y.id==e.p})[0];return '✏️ '+E(r?r.n:"")+': '+E(e.o)+' ← <b>'+E(e.n)+'</b> <small>('+E(e.by||"")+' · '+new Date(e.at).toLocaleString("ar-IQ",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"})+')</small>'}).join("<br>")+'</div>'}
 function tEdBox(t){if(t.status!="sent"&&t.status!="recv")return "";var h=tEdLog(t);
  if(t.mt)return h+'<div style="font-size:13px;color:#1e8449;margin-top:6px">🔒 طابقها المدير — ما تنعدل</div>';
- if(TED!=t.id)return h+'<button class="btn g" style="width:100%;margin-top:8px" onclick="TED=\''+t.id+'\';render()">✏️ تعديل الكمية المرسلة</button>';
+ if(!t.rows.some(function(r){var x=t.st&&t.st[r.id];return !(x&&x.s=="no")&&!tResLk(t,r.id)}))return h;if(TED!=t.id)return h+'<button class="btn g" style="width:100%;margin-top:8px" onclick="TED=\''+t.id+'\';render()">✏️ تعديل الكمية المرسلة</button>';
  return h+'<div style="margin-top:8px;border:2px solid #c9a24b;border-radius:12px;padding:8px"><div style="font-size:13px;color:var(--mu);margin-bottom:6px">اكتب الكمية اللي طلعت فعلاً من عندك. التعديل يوصل للمدير.</div>'+
-  t.rows.filter(function(r){var x=t.st&&t.st[r.id];return !(x&&x.s=="no")}).map(function(r){return '<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span style="flex:1">'+E(r.n)+' <small style="color:var(--mu)">(طلب '+E(r.c)+')</small></span><input id="tq_ed_'+t.id+'_'+r.id+'" inputmode="decimal" value="'+E(tSQ(t,r))+'" style="width:80px;margin:0;text-align:center;font-size:18px;font-weight:700"></div>'}).join("")+
+  t.rows.filter(function(r){var x=t.st&&t.st[r.id];return !(x&&x.s=="no")&&!tResLk(t,r.id)}).map(function(r){return '<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span style="flex:1">'+E(r.n)+' <small style="color:var(--mu)">(طلب '+E(r.c)+')</small></span><input id="tq_ed_'+t.id+'_'+r.id+'" inputmode="decimal" value="'+E(tSQ(t,r))+'" style="width:80px;margin:0;text-align:center;font-size:18px;font-weight:700"></div>'}).join("")+
   '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn ok" style="flex:1" onclick="tEdSave(\''+t.id+'\')">✓ حفظ التعديل</button><button class="btn g" style="flex:0 0 auto" onclick="TED=null;tqvClr(\'tq_ed_'+t.id+'\');render()">إلغاء</button></div></div>'}
 async function tEdSave(id){var t=T[id]&&T[id].data;if(!t)return;var V={},bad=0;t.rows.forEach(function(r){var e=$("tq_ed_"+id+"_"+r.id);if(!e)return;var q=shQ(e.value);if(q==null||q<0)bad=1;else V[r.id]=q});if(bad){msg("اكتب رقم صحيح");return}
- var lk=0,n=0,sh0=T[id].sha;await tPut(id,function(f){if(f.mt||(f.status!="sent"&&f.status!="recv")){lk=1;return}f.st=f.st||{};var now=Date.now();f.rows.forEach(function(r){if(!(r.id in V))return;var o=f.st[r.id]||{s:"ok",by:CFG.name,at:now},old=o.q!=null?+o.q:r.c,q=V[r.id];if(o.s=="no"||q==old)return;o.s="ok";if(q==r.c)delete o.q;else o.q=q;f.st[r.id]=o;f.ed=f.ed||[];f.ed.push({p:r.id,o:old,n:q,by:CFG.name,at:now});n++})});
+ var lk=0,n=0,sh0=T[id].sha;await tPut(id,function(f){if(f.mt||(f.status!="sent"&&f.status!="recv")){lk=1;return}f.st=f.st||{};var now=Date.now();f.rows.forEach(function(r){if(!(r.id in V))return;var o=f.st[r.id]||{s:"ok",by:CFG.name,at:now},old=o.q!=null?+o.q:r.c,q=V[r.id];if(o.s=="no"||q==old||(f.res&&f.res[r.id]))return;o.s="ok";if(q==r.c)delete o.q;else o.q=q;f.st[r.id]=o;f.ed=f.ed||[];f.ed.push({p:r.id,o:old,n:q,by:CFG.name,at:now});n++})});
  if(n&&!lk&&T[id].sha==sh0)return;TED=null;tqvClr("tq_ed_"+id);render();msg(lk?"🔒 المدير طابق هذا النقل، ما ينعدل":(n?"✅ انحفظ التعديل ووصل للمدير":"ما تغيّر شي"))}
+
+/* ===== المدير قرر على النقص: الفقرة تنقفل عند المجهز ===== */
+var TRES={ok:"قبل النقص كما هو",cut:"خلاها ناقصة (الفاتورة نزلت)",re:"طلب الباقي من مستودع ثاني",ign:"تجاهلها",del:"انمسحت من الفاتورة"};
+function tResLk(t,pid){return !!(t.res&&t.res[pid])}
+var _tItems44=tItems;tItems=function(t){var h=_tItems44.apply(this,arguments),add="";if(t.res)t.rows.forEach(function(r){var x=t.res[r.id];if(x)add+='<div style="font-size:13px;color:#1e8449">🔒 '+E(r.n)+': المدير '+E(TRES[x.a]||x.a)+(x.a=="re"&&x.tqw?' ('+E(x.tqw)+')':'')+' — ما تنعدل</div>'});return h+add};
+var _tOkQ44=tOkQ;tOkQ=function(id,pid){var t=T[id]&&T[id].data;if(t&&tResLk(t,pid)){msg("🔒 المدير قرر على هاي الفقرة");return}return _tOkQ44.apply(this,arguments)};
+var _tSetQ44=tSetQ;tSetQ=function(id,pid){var t=T[id]&&T[id].data;if(t&&tResLk(t,pid)){msg("🔒 المدير قرر على هاي الفقرة");return}return _tSetQ44.apply(this,arguments)};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
