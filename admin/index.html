@@ -2182,7 +2182,7 @@ var _acVSbx27=acVSbx;acVSbx=function(){var h=_acVSbx27();Object.keys(AC.sbox||{}
 </script>
 <script>
 /* ===== برنامج المدير كأيقونة على الإنترنت (نسخة وحدة، تتحدث بدون ملفات) ===== */
-var AC_VER="v78";
+var AC_VER="v79";
 var AC_ONLINE=/^https?:$/.test(location.protocol)&&/\/admin\/?(index\.html)?$/.test(location.pathname);
 function acAdmUrl(){if(AC_ONLINE)return location.origin+location.pathname.replace(/index\.html$/,"");return siteUrl()+"admin/"}
 function acAdmTransform(t){var shim='<script>(function(){var P="adm:",S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem,k=S.key;S.getItem=function(x){return g.call(this,P+x)};S.setItem=function(x,v){return s.call(this,P+x,v)};S.removeItem=function(x){return r.call(this,P+x)};S.clear=function(){for(var i=this.length-1;i>=0;i--){var q=k.call(this,i);if(q&&q.indexOf(P)==0)r.call(this,q)}}})()<\/script><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#14110b"><link rel="apple-touch-icon" href="../icon-180.png">';
@@ -3162,6 +3162,30 @@ function acAdmFile(inp){var f=inp.files&&inp.files[0];inp.value="";if(!f){acAdmS
  acAdmSay("⏳ جاري قراءة الملف «"+acE(f.name)+"»…");var r=new FileReader();r.onload=function(){acAdmUp(String(r.result))};r.onerror=function(){acAdmSay("❌ ما كدرت أقرا الملف",1)};r.readAsText(f,"utf-8")}
 var _acAdmUp58=acAdmUp;acAdmUp=async function(t){var st=document.getElementById("admst");if(st)st.scrollIntoView({block:"center"});return _acAdmUp58.apply(this,arguments)};
 (function(){var fix=function(){var c=document.getElementById("admc");if(!c)return;c.querySelectorAll('button[onclick="acAdmPick()"]').forEach(function(b){var l=document.createElement("label");l.className=b.className;l.style.cssText=b.style.cssText+";display:block;text-align:center;cursor:pointer";l.innerHTML=b.innerHTML+'<input type="file" accept=".html,text/html" style="display:none" onchange="acAdmFile(this)">';l.onclick=function(){acAdmSay("📂 اختار ملف afaq-invoice-vXX.html من «ملفاتي»…")};b.replaceWith(l)})};fix();setTimeout(fix,1500)})();
+
+</script>
+<script>
+/* ===== رمز GitHub بالأيقونة: نقل الإعدادات من ملفاتي، فحص الرمز، والاسترجاع ياخذ الرمز الشغال ===== */
+async function acTokOK(c){if(!c||!c.o||!c.r||!c.t)return false;try{var r=await fetch("https://api.github.com/repos/"+encodeURIComponent(c.o)+"/"+encodeURIComponent(c.r),{cache:"no-store",headers:{"Authorization":"Bearer "+c.t,"Accept":"application/vnd.github+json"}});return r.ok}catch(e){return null}}
+function acB64e(s){return btoa(unescape(encodeURIComponent(s)))}function acB64d(s){return decodeURIComponent(escape(atob(s)))}
+/* الاسترجاع: إذا الرمز الحالي ما يشتغل ورمز النسخة الاحتياطية يشتغل، ياخذ رمز النسخة */
+var _acBL59=bkLoad;bkLoad=function(inp){var f=inp&&inp.files&&inp.files[0];if(f){var rd=new FileReader();rd.onload=function(){try{var d=(JSON.parse(rd.result)||{}).data;if(!d||!d.afaq_gh)return;var B=JSON.parse(d.afaq_gh);
+  setTimeout(async function(){var C={};try{C=JSON.parse(localStorage.getItem("afaq_gh")||"{}")}catch(e){}if(C.t==B.t)return;var okC=await acTokOK(C);if(okC)return;var okB=await acTokOK(B);
+   if(okB){var N=Object.assign({},C,B);localStorage.setItem("afaq_gh",JSON.stringify(N));if(d.afaq_def)localStorage.setItem("afaq_def",d.afaq_def);acTokBanner(true);msg("🔑 رمز GitHub القديم ما چان يشتغل — أخذت الرمز الصحيح من النسخة الاحتياطية ✅")}else if(okB===false&&okC===false)acTokBanner(false)},600)}catch(e){}};rd.readAsText(f)}return _acBL59.apply(this,arguments)};
+/* نقل الإعدادات من «ملفاتي» للأيقونة */
+function acCfgLink(){var g=localStorage.getItem("afaq_gh")||"",d=localStorage.getItem("afaq_def")||"";return acAdmUrl()+"#cfg="+encodeURIComponent(acB64e(JSON.stringify({g:g,d:d,at:Date.now()})))}
+async function acCfgSend(){var c=ghc();if(!c.o||!c.t){acAdmSay("❌ هذي النسخة نفسها ما بيها إعدادات GitHub",1);return}acAdmSay("⏳ أفحص الرمز…");var ok=await acTokOK(c);if(ok===false){acAdmSay("❌ الرمز بهذي النسخة هم ما يشتغل. جدده من GitHub أول.",1);return}
+ acAdmSay('🔑 افتح هذا الرابط، وهو يحط إعداداتك بالأيقونة (مرة وحدة):<br><a href="'+acCfgLink()+'" target="_blank" style="color:var(--ac);font-weight:800">🔑 فتح الأيقونة ونقل الإعدادات</a><div style="font-size:12px;color:var(--mu);margin-top:4px">لا ترسل هذا الرابط لأحد — بيه رمزك.</div>');try{window.open(acCfgLink(),"_blank")}catch(e){}}
+async function acCfgRecv(){if(!AC_ONLINE)return;var h=location.hash||"";if(h.indexOf("#cfg=")!=0)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+ try{var o=JSON.parse(acB64d(decodeURIComponent(h.slice(5)))),G=JSON.parse(o.g||"{}");var ok=await acTokOK(G);if(ok===false){acAsk("❌ الرمز اللي انرسل ما يشتغل. جدده بـGitHub وحطه بنسخة ملفاتي وأعد.","تمام");return}
+  var C={};try{C=JSON.parse(localStorage.getItem("afaq_gh")||"{}")}catch(e){}localStorage.setItem("afaq_gh",JSON.stringify(Object.assign({},C,G)));if(o.d)localStorage.setItem("afaq_def",o.d);acTokBanner(true);
+  acAsk("✅ انتقلت إعدادات GitHub للأيقونة.\nهسه النشر والتحديث يشتغلن من هنا.","تمام")}catch(e){acAsk("❌ الرابط تالف","تمام")}}
+/* تنبيه إذا الرمز بالأيقونة ما يشتغل */
+function acTokBanner(ok){var b=document.getElementById("actokb");if(ok){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="actokb";b.style.cssText="margin:8px 0;padding:10px 12px;border-radius:12px;background:#fdecea;color:#c0392b;font-weight:700;font-size:14px;line-height:1.6";var c=document.getElementById("admc");if(c)c.prepend(b);else{var s=document.getElementById("s5");if(s)s.prepend(b)}}
+ b.innerHTML='🔑 رمز GitHub بهذي النسخة ما يشتغل (قديم أو منتهي)، فالنشر والتحديث يفشلن.<br><span style="font-weight:400">الحل: افتح البرنامج من «ملفاتي» ← إضافة منتج ← <b>🔑 نقل إعداداتك للأيقونة</b>.</span>'}
+async function acTokCheck(){var c=ghc();if(!c.o||!c.t)return;var ok=await acTokOK(c);if(ok===false)acTokBanner(false);else if(ok)acTokBanner(true)}
+(function(){var add=function(){var c=document.getElementById("admc");if(!c||c.querySelector(".cfgb"))return;if(!AC_ONLINE){c.insertAdjacentHTML("beforeend",'<button class="btn g cfgb" style="width:100%;margin-top:8px" onclick="acCfgSend()">🔑 نقل إعداداتك للأيقونة (إذا النشر يفشل منها)</button>')}else{c.insertAdjacentHTML("beforeend",'<div class="cfgb" style="font-size:13px;color:var(--mu);margin-top:6px">إذا النشر يفشل هنا: افتح البرنامج من «ملفاتي» ← هذي البطاقة ← 🔑 نقل إعداداتك للأيقونة.</div>')}};add();setTimeout(add,1500)})();
+if(AC_ONLINE){setTimeout(acCfgRecv,1200);setTimeout(acTokCheck,5000)}
 
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})</script></body>
