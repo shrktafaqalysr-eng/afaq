@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v83";
+var STF_VER="v84";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -568,6 +568,17 @@ async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{c
  b.innerHTML='<span style="flex:1">🆕 اكو نسخة جديدة ('+v+')</span><button class="btn" style="flex:0 0 auto;background:#fff;color:#1e8449;border-color:#fff" onclick="location.replace(\'./?a=1&v='+encodeURIComponent(v)+'\')">تحديث</button>'}catch(e){}}
 if(/^https?:/.test(location.protocol)){setTimeout(stfUpdChk,4000);setInterval(stfUpdChk,10*60000);document.addEventListener("visibilitychange",function(){if(!document.hidden)stfUpdChk()})}
 var _sync41=sync;sync=function(force){if(force)stfUpdChk();return _sync41.apply(this,arguments)};
+
+/* ===== الكتابة بالخانات ما تنمسح من التحديث بالخلفية ===== */
+var TQV={},INPT=0;
+document.addEventListener("input",function(e){INPT=Date.now();var t=e.target;if(t&&t.id&&/^(tsq_|tq_|trq_|ema|emg)/.test(t.id))TQV[t.id]={v:t.value,at:Date.now()}},true);
+document.addEventListener("focusin",function(e){if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))INPT=Date.now()},true);
+var _render42=render;render=function(bg){if(bg&&Date.now()-INPT<12000)return;var r=_render42.apply(this,arguments);try{var now=Date.now();Object.keys(TQV).forEach(function(k){var x=TQV[k];if(now-x.at>120000){delete TQV[k];return}var e=$(k);if(e&&e.value!=x.v&&document.activeElement!==e)e.value=x.v})}catch(e){}return r};
+function tqvClr(pre){Object.keys(TQV).forEach(function(k){if(k.indexOf(pre)==0)delete TQV[k]})}
+var _tOkQ42=tOkQ;tOkQ=async function(id,pid){var r=await _tOkQ42.apply(this,arguments);tqvClr("tsq_"+id+"_"+pid);return r};
+var _tSetQ42=tSetQ;tSetQ=async function(id,pid){var r=await _tSetQ42.apply(this,arguments);tqvClr("tsq_"+id+"_"+pid);return r};
+var _tickQ42=tickQ;tickQ=async function(no,id){var r=await _tickQ42.apply(this,arguments);tqvClr("tq_"+no+"_"+id);return r};
+var _tRecvGo42=tRecvGo;tRecvGo=function(id){var r=_tRecvGo42.apply(this,arguments);tqvClr("trq_"+id+"_");return r};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
