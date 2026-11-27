@@ -2182,7 +2182,7 @@ var _acVSbx27=acVSbx;acVSbx=function(){var h=_acVSbx27();Object.keys(AC.sbox||{}
 </script>
 <script>
 /* ===== برنامج المدير كأيقونة على الإنترنت (نسخة وحدة، تتحدث بدون ملفات) ===== */
-var AC_VER="v77";
+var AC_VER="v78";
 var AC_ONLINE=/^https?:$/.test(location.protocol)&&/\/admin\/?(index\.html)?$/.test(location.pathname);
 function acAdmUrl(){if(AC_ONLINE)return location.origin+location.pathname.replace(/index\.html$/,"");return siteUrl()+"admin/"}
 function acAdmTransform(t){var shim='<script>(function(){var P="adm:",S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem,k=S.key;S.getItem=function(x){return g.call(this,P+x)};S.setItem=function(x,v){return s.call(this,P+x,v)};S.removeItem=function(x){return r.call(this,P+x)};S.clear=function(){for(var i=this.length-1;i>=0;i--){var q=k.call(this,i);if(q&&q.indexOf(P)==0)r.call(this,q)}}})()<\/script><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#14110b"><link rel="apple-touch-icon" href="../icon-180.png">';
@@ -2191,7 +2191,7 @@ function acAdmTransform(t){var shim='<script>(function(){var P="adm:",S=Storage.
 function acAdmManifest(){return JSON.stringify({id:"./",name:"آفاق اليسر — المدير",short_name:"آفاق المدير",description:"برنامج الفواتير والحسابات",lang:"ar",dir:"rtl",start_url:"./",scope:"./",display:"standalone",background_color:"#000000",theme_color:"#14110b",icons:[{src:"../icon-192.png",sizes:"192x192",type:"image/png",purpose:"any"},{src:"../icon-512.png",sizes:"512x512",type:"image/png",purpose:"any"}]})}
 function acAdmPick(){acPinAsk().then(function(y){if(!y)return;var c=ghc();if(!c.o||!c.r||!c.t){msg("اكتب إعدادات GitHub أول");pubSet(true);return}var i=document.createElement("input");i.type="file";i.accept=".html,text/html";i.style.display="none";document.body.appendChild(i);
  i.onchange=function(){var f=i.files&&i.files[0];i.remove();if(!f)return;var r=new FileReader();r.onload=function(){acAdmUp(String(r.result))};r.readAsText(f,"utf-8")};i.click()})}
-async function acAdmUp(t){var st=document.getElementById("admst"),say=function(x){if(st)st.innerHTML=x;msg(x.replace(/<[^>]+>/g,""))};
+async function acAdmUp(t){var st=document.getElementById("admst"),say=function(x){var bad=/^❌|^⚠/.test(x);if(typeof acAdmSay=="function")acAdmSay(x,bad);else if(st)st.innerHTML=x;msg(x.replace(/<[^>]+>/g,""))};
  if(t.indexOf("شركة آفاق اليسر")<0||t.indexOf("acPinAsk")<0){say("❌ هذا مو ملف برنامج المدير (اختار ملف afaq-invoice-vXX.html)");return}var vm=(t.match(/AC_VER="([^"]+)"/)||[])[1]||"";
  try{say("⏳ جاري رفع برنامج المدير (1/3)...");await ghPut("admin/index.html",b64s(acAdmTransform(t)));say("⏳ (2/3)...");await ghPut("admin/manifest.json",b64s(acAdmManifest()));say("⏳ (3/3)...");await ghPut("admin/sw.js",b64s(SW_JS.replace('"afq-v1"','"afq-adm"')));
   acAdmWait(vm,say)}
@@ -3152,6 +3152,16 @@ var acNewV="";
 async function acAdmCheck(){if(!AC_ONLINE)return;var lv=await acAdmLiveVer();if(lv&&acVerN2(lv)>acVerN2(AC_VER)){acNewV=lv;var b=document.getElementById("acnewv");if(!b){b=document.createElement("div");b.id="acnewv";b.style.cssText="position:fixed;left:10px;right:10px;bottom:70px;z-index:140;background:#1e8449;color:#fff;border-radius:14px;padding:12px 14px;font-weight:700;display:flex;gap:10px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.3)";document.body.appendChild(b)}
  b.innerHTML='<span style="flex:1">🆕 اكو نسخة جديدة ('+lv+') — انت على '+AC_VER+'</span><button class="btn" style="flex:0 0 auto;background:#fff;color:#1e8449;border-color:#fff" onclick="acSaveNow();location.replace(location.pathname+\'?v=\'+encodeURIComponent(acNewV))">تحديث</button>'}}
 if(AC_ONLINE){setTimeout(acAdmCheck,8000);setInterval(acAdmCheck,10*60000);document.addEventListener("visibilitychange",function(){if(!document.hidden)acAdmCheck()})}
+
+</script>
+<script>
+/* ===== زر رفع برنامج المدير: يفتح الملفات مباشرة + رسائل واضحة تبقى ===== */
+function acAdmSay(x,bad){var st=document.getElementById("admst");if(st)st.innerHTML='<div style="padding:8px 10px;border-radius:10px;'+(bad?"background:#fdecea;color:#c0392b;font-weight:700":"background:#fbf6ea")+'">'+x+'</div>'}
+function acAdmFile(inp){var f=inp.files&&inp.files[0];inp.value="";if(!f){acAdmSay("ما اخترت ملف");return}var c=ghc();if(!c.o||!c.r||!c.t){acAdmSay("❌ إعدادات GitHub ناقصة بهذي النسخة (اسم الحساب أو الرمز). روح «⚙ الإعدادات» فوك وأكملها، أو سوّي 📂 استرجاع لنسختك الاحتياطية أول.",1);return}
+ if(!/\.html?$/i.test(f.name)){acAdmSay("❌ اخترت «"+acE(f.name)+"». لازم تختار ملف afaq-invoice-vXX.html",1);return}
+ acAdmSay("⏳ جاري قراءة الملف «"+acE(f.name)+"»…");var r=new FileReader();r.onload=function(){acAdmUp(String(r.result))};r.onerror=function(){acAdmSay("❌ ما كدرت أقرا الملف",1)};r.readAsText(f,"utf-8")}
+var _acAdmUp58=acAdmUp;acAdmUp=async function(t){var st=document.getElementById("admst");if(st)st.scrollIntoView({block:"center"});return _acAdmUp58.apply(this,arguments)};
+(function(){var fix=function(){var c=document.getElementById("admc");if(!c)return;c.querySelectorAll('button[onclick="acAdmPick()"]').forEach(function(b){var l=document.createElement("label");l.className=b.className;l.style.cssText=b.style.cssText+";display:block;text-align:center;cursor:pointer";l.innerHTML=b.innerHTML+'<input type="file" accept=".html,text/html" style="display:none" onchange="acAdmFile(this)">';l.onclick=function(){acAdmSay("📂 اختار ملف afaq-invoice-vXX.html من «ملفاتي»…")};b.replaceWith(l)})};fix();setTimeout(fix,1500)})();
 
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})</script></body>
