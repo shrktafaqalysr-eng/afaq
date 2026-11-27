@@ -525,6 +525,35 @@ var _vJobs39=vJobs;vJobs=function(){return fixT(_vJobs39.apply(this,arguments))}
 var _vJob39=vJob;vJob=function(){return fixT(_vJob39.apply(this,arguments))};
 var _prtDo39=prtDo;prtDo=function(d,o){if(String(d.no).indexOf("t-")==0)d=Object.assign({},d,{no:"(جديدة)"});return _prtDo39.call(this,d,o)};
 
+/* ===== الكمية المجهزة فعلاً (نقص معلّق) + الواصل فعلاً بالنقل ===== */
+function shQ(v){v=String(v||"").replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d)});var n=parseFloat(v);return isNaN(n)?null:n}
+var _tick40=tick;tick=function(no,id){var x=J[no],s=x&&x.data.st&&x.data.st[id];if(s&&s.lk){msg("🔒 هاي الفقرة انحسمت من المدير، ما تتغير");return}return _tick40.apply(this,arguments)};
+async function tickQ(no,id){var x=J[no];if(!x)return;var d=x.data,r=d.rows.filter(function(z){return z.id==id})[0];if(!r||!mine(d,r))return;var s=d.st&&d.st[id];if(s&&s.lk){msg("🔒 انحسمت من المدير");return}
+ var q=shQ($("tq_"+no+"_"+id).value);if(q==null||q<0){msg("اكتب الكمية");return}if(q>r.c){msg("أكثر من المطلوب ("+r.c+") — إذا اكو زيادة كلّم المدير");return}var t=Date.now();
+ try{var res=await upd("jobs/"+no+".json",function(f){f.st=f.st||{};var o=f.st[id]||{};if(o.lk)throw "lk";var n={ok:1,by:CFG.name,at:t};if(q<r.c){n.q=q;if(o.res=="tq"){n.res="tq";n.tq=o.tq;n.tqw=o.tqw}}f.st[id]=n;f.upd=t});J[no]={sha:res.sha,data:res.data};localStorage.setItem("stf_j",JSON.stringify(J));
+  msg(q<r.c?"⚠ انسجل: جهزت "+q+" من "+r.c+" — النقص معلّق عند المدير":"✅ جهزت الكمية كاملة");render()}catch(e){msg(e=="lk"?"🔒 انحسمت من المدير":"ما انحفظ، تأكد من الإنترنت")}}
+var _trRowTag40=trRowTag;trRowTag=function(no,id){var h=_trRowTag40.apply(this,arguments),x=J[no],d=x&&x.data,r=d&&d.rows.filter(function(z){return z.id==id})[0],s=d&&d.st&&d.st[id];if(!r||!s)return h;
+ if(s.res=="cut")h+='<small style="display:block;color:#7d725c">✂ المدير عدّل الفاتورة'+(s.was?' (كانت '+E(QF(s.was,r.u,r.ctn,r.u2))+')':'')+' 🔒</small>';
+ else if(s.ok&&s.q!=null&&s.q<r.c)h+='<small style="display:block;color:#c0392b;font-weight:700">⚠ جهزت '+E(QF(s.q,r.u,r.ctn,r.u2))+' — ناقص '+E(QF(Math.round((r.c-s.q)*1000)/1000,r.u,r.ctn,r.u2))+(s.res=="tq"?' · 📦 انطلب من '+E(s.tqw||"مستودع ثاني"):' (معلّق)')+'</small>';
+ return h};
+var _vJob40=vJob;vJob=function(no){var h=_vJob40.apply(this,arguments),x=J[no];if(!x)return h;var d=x.data,M=myRows(d);if(!M.length)return h;
+ var p='<details class="card" style="padding:10px"'+(M.some(function(r){var s=d.st&&d.st[r.id];return s&&s.q!=null})?' open':'')+'><summary style="font-weight:700;cursor:pointer">✏ جهزت أقل من المطلوب؟ اكتب الكمية الحقيقية</summary><div style="font-size:13px;color:var(--mu);margin:6px 0">الفاتورة ما تتغير لحد ما المدير يقرر. إذا لكيت الباقي بعدين، رجّع اكتب الكمية كاملة.</div>'+
+  M.map(function(r){var s=d.st&&d.st[r.id],lk=s&&s.lk,v=s&&s.q!=null?s.q:r.c;return '<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--ln)"><span style="flex:1;font-size:14px">'+E(r.n)+'<br><small>المطلوب '+E(QF(r.c,r.u,r.ctn,r.u2))+'</small></span>'+(lk?'<span style="font-size:13px">🔒</span>':'<input id="tq_'+E(d.no)+'_'+E(r.id)+'" type="number" inputmode="decimal" value="'+E(String(v))+'" style="width:80px;margin:0;text-align:center;font-size:17px"><button class="btn" style="flex:0 0 auto;padding:6px 10px" onclick="tickQ(\''+E(d.no)+'\',\''+E(r.id)+'\')">حفظ</button>')+'</div>'}).join("")+'</details>';
+ var i=h.lastIndexOf('<button class="btn ok"');return i>=0?h.slice(0,i)+p+h.slice(i):h+p};
+/* النقل: المجهز يكتب شكد جهز، والمستلم يكتب شكد وصل */
+function tSQ(t,r){var x=t.st&&t.st[r.id];return x&&x.q!=null?+x.q:r.c}
+function tRQ(t,r){return t.rc&&t.rc[r.id]!=null?+t.rc[r.id]:tSQ(t,r)}
+function tSetQ(id,pid){var t=(T[id]||{}).data,r=t&&t.rows.filter(function(z){return z.id==pid})[0];if(!r)return;var q=shQ($("tsq_"+id+"_"+pid).value);if(q==null||q<=0){msg("اكتب الكمية (إذا ما موجود اضغط ✗)");return}
+ return tPut(id,function(f){if(f.status!="new")return;f.st=f.st||{};var o=f.st[pid];if(!o||o.s!="ok")return;if(q<r.c)o.q=q;else delete o.q},q<r.c?"⚠ انسجل: جهزت "+q+" من "+r.c:"✅ الكمية كاملة")}
+var _tItemsIn40=tItemsIn;tItemsIn=function(t){var h=_tItemsIn40.apply(this,arguments),add='';t.rows.forEach(function(r){var x=t.st&&t.st[r.id];if(x&&x.s=="ok")add+='<div style="display:flex;gap:6px;align-items:center;padding:4px 0;font-size:14px"><span style="flex:1">'+E(r.n)+' — جهزت:</span><input id="tsq_'+t.id+'_'+E(r.id)+'" type="number" inputmode="decimal" value="'+tSQ(t,r)+'" style="width:80px;margin:0;text-align:center"><button class="btn g" style="flex:0 0 auto;padding:4px 10px" onclick="tSetQ(\''+t.id+'\',\''+E(r.id)+'\')">حفظ</button></div>'});
+ return h+(add?'<div style="border-top:1px dashed var(--ln);margin-top:6px;padding-top:4px"><small style="color:var(--mu)">إذا جهزت أقل من المطلوب، اكتب الكمية الحقيقية:</small>'+add+'</div>':'')};
+var TRC="";
+var _tItems40=tItems;tItems=function(t){if(TRC==t.id&&t.status=="sent"){return '<div style="font-size:13px;color:var(--mu);margin:4px 0">عدّ الواصل واكتب الرقم الحقيقي جنب كل صنف:</div>'+t.rows.filter(function(r){var x=t.st&&t.st[r.id];return !x||x.s=="ok"}).map(function(r){return '<div class="tr" style="align-items:center"><span style="flex:1">'+E(r.n)+'<br><small>انرسل '+E(QF(tSQ(t,r),r.u,r.ctn,r.u2))+'</small></span><input id="trq_'+t.id+'_'+E(r.id)+'" type="number" inputmode="decimal" value="'+tSQ(t,r)+'" style="width:90px;margin:0;text-align:center;font-size:18px"></div>'}).join("")+'<div style="display:flex;gap:8px;margin-top:8px"><button class="btn ok" style="flex:1" onclick="tRecvGo(\''+t.id+'\')">✅ تأكيد الاستلام</button><button class="btn g" style="flex:0 0 auto" onclick="TRC=\'\';render()">إلغاء</button></div>'}
+ var h=_tItems40.apply(this,arguments),add='';t.rows.forEach(function(r){var sq=tSQ(t,r),rq=tRQ(t,r),x=t.st&&t.st[r.id];if(x&&x.s=="no")return;if(sq!=r.c||(t.status=="recv"&&rq!=sq))add+='<div style="font-size:13px;color:#c0392b">⚠ '+E(r.n)+': طلب '+r.c+' · جهز '+sq+(t.status=="recv"?' · وصل '+rq:'')+'</div>'});return h+add};
+var _tRecv40=tRecv;tRecv=function(id){if(TRC!=id){TRC=id;render();return}return _tRecv40.apply(this,arguments)};
+function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.forEach(function(r){var e=$("trq_"+id+"_"+r.id);if(!e)return;var q=shQ(e.value);if(q==null||q<0){bad=1;return}if(q!=tSQ(t,r))rc[r.id]=q});if(bad){msg("اكتب كل الكميات");return}
+ TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
+
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
 var INOTHER=SA0&&!AIN&&!navigator.standalone&&localStorage.getItem("stf_inst")!="1",SA=SA0&&!INOTHER,IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform=="MacIntel"&&navigator.maxTouchPoints>1),DP=null;
