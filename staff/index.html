@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v94";
+var STF_VER="v96";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -614,6 +614,16 @@ var _tEdBox46=tEdBox;tEdBox=function(t){if(t.invDel&&t.status=="sent")return '<d
 async function tInvBack(id){var ok=0;await tPut(id,function(f){if(f.status!="sent"||!f.invDel)return;f.status="cancel";f.cancelBy=CFG.name;f.cancelAt=Date.now();f.cancelWhy="الفاتورة انحذفت — البضاعة رجعت لـ"+(f.fromn||"");ok=1});msg(ok?"↩ انلغى النقل ورجعت البضاعة لمستودعك":"ما تغيّر — يمكن انستلمت أو انلغت")}
 var _tRecv46=tRecv;tRecv=function(id){var t=T[id]&&T[id].data;if(t&&t.invDel&&!t._w){t._w=1;msg("⚠ المدير حذف هاي الفاتورة — الأحسن ترجّعها. إذا وصلتك فعلاً اضغط مرة ثانية");render();return}return _tRecv46.apply(this,arguments)};
 var _tItems46=tItems;tItems=function(t){var h=_tItems46.apply(this,arguments);if(t.invDel&&t.status=="sent"&&!tIn(t))h+='<div style="font-size:13px;color:#c0392b;margin-top:4px">🗑 المدير حذف الفاتورة — هاي البضاعة لازم ترجع لـ'+E(t.fromn||"")+'</div>';if(t.cancelWhy)h+='<div style="font-size:13px;color:#c0392b;margin-top:4px">✕ '+E(t.cancelWhy)+'</div>';return h};
+
+/* ===== طلبات GitHub الشرطية (ETag): اللي ما تغيّر يرجع 304 وما ينحسب من حد الطلبات ===== */
+var STET={},STETn=0;
+var _api47=api;api=async function(m,p,body){var u="https://api.github.com/repos/"+encodeURIComponent(CFG.o)+"/"+encodeURIComponent(CFG.r)+"/contents/"+p;
+ if(m!="GET"){var dir=p.replace(/\/[^\/]*$/,"");delete STET[u];delete STET["https://api.github.com/repos/"+encodeURIComponent(CFG.o)+"/"+encodeURIComponent(CFG.r)+"/contents/"+dir];return _api47.apply(this,arguments)}
+ var h={"Authorization":"Bearer "+CFG.t,"Accept":"application/vnd.github+json"},x=STET[u];if(x&&x.e)h["If-None-Match"]=x.e;
+ var r=await fetch(u,{method:"GET",cache:"no-store",headers:h});
+ if(r.status==304&&x)return new Response(x.b,{status:200,headers:{"content-type":"application/json"}});
+ if(r.ok){var t=await r.text(),e=r.headers.get("ETag");if(e){if(!STET[u]&&++STETn>2000){STET={};STETn=0}STET[u]={e:e,b:t}}return new Response(t,{status:r.status,headers:{"content-type":"application/json"}})}
+ return r};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
