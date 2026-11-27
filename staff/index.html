@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v88";
+var STF_VER="v89";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -602,7 +602,8 @@ var _tSetQ44=tSetQ;tSetQ=function(id,pid){var t=T[id]&&T[id].data;if(t&&tResLk(t
 
 /* ===== بالمستودع المستلم: يبين شكد جهّزوا فعلاً بالنقل، وقرار المدير على النقص ===== */
 var _trRowTag45=trRowTag;trRowTag=function(no,id){var h=_trRowTag45.apply(this,arguments);
- TL().filter(function(t){return t.kind=="inv"&&String(t.inv)==String(no)&&t.status!="cancel"}).forEach(function(t){var r=t.rows.filter(function(x){return x.id==id})[0];if(!r)return;var sq=tSQ(t,r);if(sq==r.c)return;
+ TL().filter(function(t){return t.kind=="inv"&&String(t.inv)==String(no)&&t.status!="cancel"}).forEach(function(t){var r=t.rows.filter(function(x){return x.id==id})[0];if(!r)return;var sq=tSQ(t,r);if(sq==r.c)return;var jd=J[no]&&J[no].data,jr=jd&&(jd.rows||[]).filter(function(z){return z.id==id})[0],xr=t.res&&t.res[id];
+  if((xr&&xr.a=="cut")||(jr&&sq>=jr.c)){h=h.replace('🚚 '+E(r.c)+' من '+E(t.fromn)+' · ','🚚 '+E(sq)+' من '+E(t.fromn)+' · ');return}
   var a='🚚 '+E(r.c)+' من '+E(t.fromn)+' · ',x=t.res&&t.res[id],dec=x?(x.a=="ok"&&t.kind=="inv"?'⏳ المدير يقرر على الناقص':'🔒 المدير '+E(TRES[x.a]||x.a)):'⏳ المدير يقرر على الناقص';
   h=h.replace(a,'🚚 <b style="color:#c0392b">جهّزوا '+E(sq)+' من '+E(r.c)+'</b> من '+E(t.fromn)+' · ');
   var k='</span><br>',i=h.indexOf(k,h.indexOf('جهّزوا '+E(sq)));if(i>=0)h=h.slice(0,i)+'<br><small style="color:#c0392b">ناقص '+E(Math.round((r.c-sq)*1000)/1000)+' — '+dec+'</small>'+h.slice(i)});
