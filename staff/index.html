@@ -491,11 +491,14 @@ vSInv=function(){var S=SI,ro=S.ro,dis=ro?" disabled":"",T=siTot(),cn=S.cn.trim()
  var shd=!!(parseFloat(S.disc)||SI.sd);
  h+='<div class="card" style="background:#fbf6ea"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px">المجموع</span><span id="sitg" style="font-size:26px;font-weight:800">'+nf(T.net)+'</span></div>'+
   (shd?'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span>خصم</span><input type="number" inputmode="decimal" value="'+E(S.disc)+'"'+dis+' style="margin:0;width:120px;text-align:center" oninput="SI.disc=this.value;siUpd2()"></div>':(ro?'':'<div style="font-size:13px;margin-top:4px"><a href="#" onclick="SI.sd=1;render();return false">+ خصم</a></div>'))+
-  (cn?'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span>'+(S.it=="sret"?"رجعتله نقد":"واصل")+'</span><div style="display:flex;gap:6px"><input id="sipd" type="number" inputmode="decimal" value="'+E(S.paid)+'" placeholder="0"'+dis+' style="margin:0;width:120px;text-align:center;font-size:17px" oninput="SI.paid=this.value;siUpd2()">'+(ro?'':'<button class="btn g" style="flex:0 0 auto;padding:6px 10px" onclick="SI.paid=String(siTot().net);$(\'sipd\').value=SI.paid;siUpd2()">كامل</button>')+'</div></div>'+
+  (cn?'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">'+[["c",S.it=="sret"?"💵 رجعتله نقد":"💵 نقد كامل"],["a",S.it=="sret"?"📒 على حسابه":"📒 آجل"],["p","✂ جزء"]].map(function(x){var on=(S.pm||"a")==x[0];return '<button class="btn'+(on?'':' g')+'" style="padding:10px 2px;font-size:14px'+(on&&x[0]=="a"?";background:#b8892b;border-color:#b8892b":"")+'"'+dis+' onclick="siPm(\''+x[0]+'\')">'+x[1]+'</button>'}).join("")+'</div>'+
+   ((S.pm=="p")?'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span>'+(S.it=="sret"?"رجعتله":"واصل")+'</span><input id="sipd" type="number" inputmode="decimal" value="'+E(S.paid)+'" placeholder="المبلغ"'+dis+' style="margin:0;width:140px;text-align:center;font-size:17px" oninput="SI.paid=this.value;siUpd2()"></div>':'')+
    '<div id="siaf" style="display:flex;justify-content:space-between;margin-top:8px;font-size:15px"></div>':'<div style="font-size:13px;color:var(--mu);margin-top:6px">💵 نقد — ينحسب واصل كامل</div>')+'</div>';
  if(!ro)h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" style="padding:14px;font-size:17px" onclick="siSave(\'p\')">🖨 حفظ وطباعة</button><button class="btn g" style="padding:14px;font-size:16px" onclick="siSave(\''+(cn&&(S.ph||(c&&c.ph))?"w":"")+'\')">'+(cn&&(S.ph||(c&&c.ph))?"📤 حفظ وواتساب":"💾 حفظ بس")+'</button></div>';
  if(S.id)h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn g" style="flex:1" onclick="siPrint()">🖨 طباعة</button>'+(S.ph||(c&&c.ph)?'<button class="btn g" style="flex:1" onclick="siWa()">📤 واتساب</button>':'')+(ro?'':'<button class="btn g" style="flex:1;color:#c0392b;border-color:#c0392b" onclick="if(this.dataset.k){siDel()}else{this.dataset.k=1;this.textContent=\'اضغط مرة ثانية\'}">🗑 حذف</button>')+'</div>';
  setTimeout(siUpd2,0);return h};
+function siPm(m){SI.pm=m;if(m=="c")SI.paid=String(siTot0().net);else if(m=="a")SI.paid="0";render();if(m=="p")setTimeout(function(){var e=$("sipd");if(e)e.focus()},50)}
+var siTot0=siTot;siTot=function(){if(SI&&SI.cn&&SI.cn.trim()){if(SI.pm=="c")SI.paid=String(siTot0().net);else if((SI.pm||"a")=="a")SI.paid="0"}return siTot0()};
 function siRow2(i){var r=SI.rows[i],a=Math.round((parseFloat(r.c)||0)*(parseFloat(r.pr)||0)),e=$("sia"+i);if(e)e.textContent=nf(a);siUpd2()}
 function siUpd2(){if(!SI)return;var T=siTot(),g=$("sitg");if(g)g.textContent=nf(T.net);var e=$("siaf");if(!e)return;var c=shCus(SI.cn.trim()),ob=c?c.b:0,sg=SI.it=="sret"?-1:1,af=SI.id?ob:ob+sg*T.rem;
  e.innerHTML='<span>'+(SI.id?"حسابه هسه":"الحساب بعدها")+'</span><b style="color:'+(af>0?"#c0392b":"#1e8449")+'">'+bTx(af)+'</b>'}
@@ -504,8 +507,23 @@ var _siDel38=siDel;siDel=async function(){var t=SI&&SL[SI.id]&&SL[SI.id].data,no
 function shDelNos(){var D={};Object.keys(SL).forEach(function(k){var t=SL[k].data;if(t&&t.status=="del"&&t.no)D[String(t.no)]=1});return D}
 var _vJobs38=vJobs;vJobs=function(){var D=shDelNos(),H={};Object.keys(J).forEach(function(k){var d=J[k].data;if(d&&(d.del||D[String(d.no)])){H[k]=J[k];delete J[k]}});try{return _vJobs38.apply(this,arguments)}finally{Object.keys(H).forEach(function(k){J[k]=H[k]})}};
 var _shopSync38=shopSync;shopSync=async function(){await _shopSync38.apply(this,arguments);var D=shDelNos();for(var k in D){var j=J[k];if(j&&j.data&&!j.data.closed){try{var r=await upd("jobs/"+k+".json",function(f){f.closed=1;f.del=1});J[k]={sha:r.sha,data:r.data}}catch(e){}}}};
-var _siNew38=siNew;siNew=function(){SIX=-1;SQ="";return _siNew38.apply(this,arguments)};
+var _siNew38=siNew;siNew=function(){SIX=-1;SQ="";var r=_siNew38.apply(this,arguments);if(SI){SI.pm="a";render()}return r};
+var _siOpen39=siOpen;siOpen=function(id){var r=_siOpen39.apply(this,arguments);if(SI){var t=(SL[id]||{}).data||{},n=shNet(t).net,pd=+t.paid||0;SI.pm=!(t.cust&&t.cust.n)?"c":pd<=0?"a":Math.abs(pd-n)<1?"c":"p";render()}return r};
 var _siAdd38=siAdd;siAdd=function(id){_siAdd38.apply(this,arguments);setTimeout(function(){var q=$("siq");if(q){q.scrollIntoView({block:"center"})}},50)};
+
+/* ===== فاتورة المحل تروح للتجهيز فوراً (حتى لو برنامج المدير مسدود) ===== */
+function shTmpData(o){var rows=(o.rows||[]).map(function(r){var p=PRM[r.id]||{},w=r.w||CFG.wh;return {id:r.id,n:p.n||"",c:r.c,u:p.u||"",ctn:p.ctn||0,u2:p.u2||"",w:w,wn:shWhN(w)}});return {no:"t-"+o.id,tmp:1,sid:o.id,at:o.at,cust:o.cust&&o.cust.n||"",nt:o.nt||"",it:"sale",wh:CFG.wh,whn:CFG.whn||"",rows:rows,st:{}}}
+async function shTmpPut(o){var p="jobs/t-"+o.id+".json";try{var ex=await getF(p),d=shTmpData(o);if(ex){if(ex.data.closed)return;var old=ex.data.st||{},oc={};(ex.data.rows||[]).forEach(function(x){oc[x.id]=x.c+"|"+x.w});d.rows.forEach(function(x){if(old[x.id]&&oc[x.id]==x.c+"|"+x.w)d.st[x.id]=old[x.id]});if(ex.data.ph)d.ph=ex.data.ph}
+ var sha=await putF(p,d,ex?ex.sha:null,"تجهيز");J["t-"+o.id]={sha:sha,data:d};localStorage.setItem("stf_j",JSON.stringify(J))}catch(e){}}
+async function shTmpClose(id){var k="t-"+id;try{var r=await upd("jobs/"+k+".json",function(f){f.closed=1;f.del=1});J[k]={sha:r.sha,data:r.data};localStorage.setItem("stf_j",JSON.stringify(J))}catch(e){}}
+var _siSave39=siSave;siSave=async function(){var before={};Object.keys(SL).forEach(function(k){before[k]=SL[k].sha});var oid=SI&&SI.id;await _siSave39.apply(this,arguments);
+ var id=oid||Object.keys(SL).filter(function(k){return !before[k]})[0],o=id&&SL[id]&&SL[id].data;if(!o||(oid&&before[oid]==SL[oid].sha))return;
+ if(!o.no&&o.status!="del"){if(o.it=="sret")await shTmpClose(o.id);else await shTmpPut(o);render()}};
+var _siDel39=siDel;siDel=async function(){var t=SI&&SL[SI.id]&&SL[SI.id].data;await _siDel39.apply(this,arguments);var t2=t&&SL[t.id]&&SL[t.id].data;if(t2&&t2.status=="del"&&!t.no){await shTmpClose(t.id);render()}};
+function fixT(h){return String(h).replace(/فاتورة t-[a-z0-9]+/g,"فاتورة جديدة ⏳").replace(/رقم t-[a-z0-9]+/g,"جديدة ⏳")}
+var _vJobs39=vJobs;vJobs=function(){return fixT(_vJobs39.apply(this,arguments))};
+var _vJob39=vJob;vJob=function(){return fixT(_vJob39.apply(this,arguments))};
+var _prtDo39=prtDo;prtDo=function(d,o){if(String(d.no).indexOf("t-")==0)d=Object.assign({},d,{no:"(جديدة)"});return _prtDo39.call(this,d,o)};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
