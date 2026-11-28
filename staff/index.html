@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v96";
+var STF_VER="v97";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -624,6 +624,15 @@ var _api47=api;api=async function(m,p,body){var u="https://api.github.com/repos/
  if(r.status==304&&x)return new Response(x.b,{status:200,headers:{"content-type":"application/json"}});
  if(r.ok){var t=await r.text(),e=r.headers.get("ETag");if(e){if(!STET[u]&&++STETn>2000){STET={};STETn=0}STET[u]={e:e,b:t}}return new Response(t,{status:r.status,headers:{"content-type":"application/json"}})}
  return r};
+
+/* ===== فتح فاتورة المحل: الواصل ما يضيع (كان يصير صفر من أول عرض) ===== */
+var _siOpen48=siOpen;siOpen=function(id){var t=(SL[id]||{}).data||{};var r=_siOpen48.apply(this,arguments);if(SI&&SI.id==id){SI.paid=t.paid?String(t.paid):"";var n=shNet(t).net,pd=+t.paid||0;SI.pm=!(t.cust&&t.cust.n)?"c":pd<=0?"a":Math.abs(pd-n)<1?"c":"p";render()}return r};
+/* ===== حذف فاتورة المحل: يسد طلب التجهيز عند كل المستودعات حتى لو المدير مسجلها وبعده ما وصل الرقم ===== */
+shTmpClose=async function(id){var k="t-"+id,p="jobs/"+k+".json";try{var ex=await getF(p);if(!ex||ex.data.closed)return;var r=await upd(p,function(f){f.closed=1;f.del=1});J[k]={sha:r.sha,data:r.data};localStorage.setItem("stf_j",JSON.stringify(J))}catch(e){}};
+async function shJobKill(t){try{var fr=await getF(shPath(t)),no=(fr&&fr.data&&fr.data.no)||t.no;if(no){var p="jobs/"+no+".json",ex=await getF(p);if(ex&&!ex.data.closed){var r=await upd(p,function(f){f.closed=1;f.del=1});J[String(no)]={sha:r.sha,data:r.data}}}await shTmpClose(t.id);localStorage.setItem("stf_j",JSON.stringify(J))}catch(e){}}
+var _siDel48=siDel;siDel=async function(){var t=SI&&SL[SI.id]&&SL[SI.id].data;await _siDel48.apply(this,arguments);var t2=t&&SL[t.id]&&SL[t.id].data;if(t2&&t2.status=="del"){await shJobKill(t2);render()}};
+/* الطلبات المحذوفة ما تبين بالتجهيز أبداً */
+var _vJobs48=vJobs;vJobs=function(){var H={};Object.keys(J).forEach(function(k){var d=J[k]&&J[k].data;if(d&&d.del){H[k]=J[k];delete J[k]}});try{return _vJobs48.apply(this,arguments)}finally{Object.keys(H).forEach(function(k){J[k]=H[k]})}};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
