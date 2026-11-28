@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v97";
+var STF_VER="v98";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
