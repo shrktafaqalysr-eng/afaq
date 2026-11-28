@@ -234,7 +234,7 @@ function prtDo(d,only){var L=d.rows.filter(function(r){return !only||mine(d,r)})
 function nf(v,c){return Number(v||0).toLocaleString("en-US",{maximumFractionDigits:c=="USD"?2:0})}
 function CN(c){return c=="USD"?"$":"د.ع"}
 function vCash(){return boxHead()+(CMODE=="exp"?vExp():vCash0())}
-function vCash0(){var my=Object.keys(CS).map(function(k){return CS[k].data}).filter(function(t){return t.by==CFG.name}).sort(function(a,b){return b.at-a.at}).slice(0,40),cu=CUD[CFG.name]||{},ST={new:["⏳ بانتظار موافقة المدير","#b8892b"],ok:["✅ تأكد","#1e8449"],rej:["✕ مرفوض","#c0392b"],cancel:["✕ ملغي","#7d725c"]};
+function vCash0(){var my=Object.keys(CS).map(function(k){return CS[k].data}).filter(function(t){return t.by==BXK()}).sort(function(a,b){return b.at-a.at}).slice(0,40),cu=CUD[BXK()]||{},ST={new:["⏳ بانتظار موافقة المدير","#b8892b"],ok:["✅ تأكد","#1e8449"],rej:["✕ مرفوض","#c0392b"],cancel:["✕ ملغي","#7d725c"]};
  return '<div class="card"><b>💵 استلام مبلغ من زبون</b><datalist id="csl">'+CUS.map(function(c){return '<option value="'+E(c.n)+'">'}).join("")+'</datalist>'+
  '<input id="csn" list="csl" placeholder="اسم الزبون" oninput="csHint()" autocomplete="off"><div id="csb" style="font-size:13px;margin:-4px 0 8px"></div>'+
  '<div style="display:flex;gap:8px"><input id="csa" type="number" inputmode="decimal" placeholder="المبلغ" style="flex:1;margin:0"><select id="csc" style="flex:0 0 90px;margin:0"><option value="IQD">دينار</option><option value="USD">دولار $</option></select></div>'+
@@ -246,7 +246,7 @@ function csFind(n){n=String(n||"").trim();return CUS.filter(function(c){return c
 function csHint(){var c=csFind($("csn").value),e=$("csb");if(!e)return;if(!$("csn").value.trim()){e.innerHTML="";return}if(!c){e.innerHTML='<span style="color:#c0392b">⚠ اختار الاسم من القائمة (الزبون مو مسجل)</span>';return}e.innerHTML=c.b!=null||c.bu!=null?'رصيده: <b>'+(c.b>0?"عليه ":c.b<0?"له ":"")+nf(Math.abs(c.b||0),"IQD")+' د.ع</b>'+(c.bu?' · <b>'+nf(c.bu,"USD")+' $</b>':""):'<span style="color:#1e8449">✔ زبون مسجل</span>'}
 function csPhoto(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);i.onchange=function(){var f=i.files&&i.files[0];i.remove();if(f)phShrink(f).then(function(u){CPH=u;var a=$("csn"),b=$("csa"),c=$("csc"),d=$("csnt"),sv=[a&&a.value,b&&b.value,c&&c.value,d&&d.value];render();if($("csn")){$("csn").value=sv[0]||"";$("csa").value=sv[1]||"";$("csc").value=sv[2]||"IQD";$("csnt").value=sv[3]||"";csHint()}})};i.click()}
 async function csSend(){var n=$("csn").value.trim(),a=parseFloat($("csa").value),cur=$("csc").value,c=csFind(n);if(!n){msg("اكتب اسم الزبون");return}if(!c){msg("اختار الزبون من القائمة");return}if(!(a>0)){msg("اكتب المبلغ");return}
- var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:CFG.name,wh:CFG.whn||"",cust:c.n,cid:c.id,amt:a,cur:cur,nt:$("csnt").value.trim(),status:"new"};msg("⏳ جاري الإرسال...");
+ var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:BXK(),who:CFG.name,wh:CFG.whn||"",cust:c.n,cid:c.id,amt:a,cur:cur,nt:$("csnt").value.trim(),status:"new"};msg("⏳ جاري الإرسال...");
  try{if(CPH){var p="photos/cash-"+id+".jpg",r=await api("PUT",p,{message:"صورة قبض",content:CPH.split(",")[1]});if(r.ok){o.ph=p;PH[p]=CPH}}
   var sha=await putF("cash/"+id+".json",o,null,"قبض "+c.n);CS[id]={sha:sha,data:o};localStorage.setItem("stf_cs",JSON.stringify(CS));CPH="";msg("✅ انرسل للمدير: "+nf(a,cur)+" "+CN(cur)+" من "+c.n);render()}
  catch(e){msg(e==401||e==403?"رمز الربط ما يسمح بالكتابة":"ما انرسل، تأكد من الإنترنت")}}
@@ -254,8 +254,8 @@ async function csCancel(id){try{var r=await upd("cash/"+id+".json",function(f){i
 
 /* ===== صندوق المجهز: الصرف (لمستودع مسموح بس) ===== */
 function boxOK(){if(allW())return false;return (PERM.bw||[]).some(function(w){return (w.id&&w.id==CFG.wh)||w.n==CFG.whn})}
-function myXP(){return Object.keys(XP).map(function(k){return XP[k].data}).filter(function(t){return t.by==CFG.name}).sort(function(a,b){return b.at-a.at})}
-function boxBal(){var cu=CUD[CFG.name]||{},b={IQD:cu.IQD||0,USD:cu.USD||0},px=cu.px||[];myXP().forEach(function(t){if(t.status=="new"&&px.indexOf(t.id)<0)b[t.cur]-=t.amt});return b}
+function myXP(){return Object.keys(XP).map(function(k){return XP[k].data}).filter(function(t){return t.by==BXK()}).sort(function(a,b){return b.at-a.at})}
+function boxBal(){var cu=CUD[BXK()]||{},b={IQD:cu.IQD||0,USD:cu.USD||0},px=cu.px||[];myXP().forEach(function(t){if(t.status=="new"&&px.indexOf(t.id)<0)b[t.cur]-=t.amt});return b}
 function boxHead(){var b=boxBal();return '<div class="card" style="background:#17140d;color:#e6c274;border-color:#c9a24b"><div style="font-size:13px">👛 رصيد صندوقي (بذمتي)</div><div style="font-size:26px;font-weight:800">'+nf(b.IQD,"IQD")+' د.ع'+(b.USD?' · '+nf(b.USD,"USD")+' $':"")+'</div></div>'+
  '<div class="tb"><button class="'+(CMODE=="exp"?"on":"")+'" onclick="CMODE=\'exp\';render()">💸 صرف</button><button class="'+(CMODE=="rc"?"on":"")+'" onclick="CMODE=\'rc\';render()">💵 قبض من زبون</button></div>'}
 function vExp(){var A=PERM.acc||[],L=myXP().slice(0,40),td=new Date().toDateString(),tt=0;L.forEach(function(t){if(new Date(t.at).toDateString()==td&&t.status!="cancel"&&t.cur=="IQD")tt+=t.amt});
@@ -266,7 +266,7 @@ function vExp(){var A=PERM.acc||[],L=myXP().slice(0,40),td=new Date().toDateStri
 function xKeep(f){var a=$("xa"),m=$("xm"),c=$("xc"),n=$("xn"),sv=[a&&a.value,m&&m.value,c&&c.value,n&&n.value];f();if($("xa")){$("xa").value=sv[0]||"";$("xm").value=sv[1]||"";$("xc").value=sv[2]||"IQD";$("xn").value=sv[3]||""}}
 function xPhoto(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);i.onchange=function(){var f=i.files&&i.files[0];i.remove();if(f)phShrink(f).then(function(u){xKeep(function(){CPH=u;render()})})};i.click()}
 async function xSend(){var ac=$("xa").value,a=parseFloat($("xm").value),cur=$("xc").value,A=(PERM.acc||[]).filter(function(x){return x.c==ac})[0];if(!A){msg("اختار الحساب");return}if(!(a>0)){msg("اكتب المبلغ");return}
- var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:CFG.name,wh:CFG.whn||"",acc:A.c,accn:A.n,amt:a,cur:cur,nt:$("xn").value.trim(),status:"new"};msg("⏳ جاري التسجيل...");
+ var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:BXK(),who:CFG.name,wh:CFG.whn||"",acc:A.c,accn:A.n,amt:a,cur:cur,nt:$("xn").value.trim(),status:"new"};msg("⏳ جاري التسجيل...");
  try{if(CPH){var p="photos/exp-"+id+".jpg",r=await api("PUT",p,{message:"صورة صرف",content:CPH.split(",")[1]});if(r.ok){o.ph=p;PH[p]=CPH}}var sha=await putF("exp/"+id+".json",o,null,"صرف "+A.n);XP[id]={sha:sha,data:o};localStorage.setItem("stf_xp",JSON.stringify(XP));CPH="";msg("✅ انسجل: "+A.n+" "+nf(a,cur)+" "+CN(cur));render()}
  catch(e){msg(e==401||e==403?"رمز الربط ما يسمح بالكتابة":"ما انسجل، تأكد من الإنترنت")}}
 async function xCancel(id){try{var r=await upd("exp/"+id+".json",function(f){if(f.status=="new")f.status="cancel"});XP[id]={sha:r.sha,data:r.data};localStorage.setItem("stf_xp",JSON.stringify(XP));msg("انلغى");render()}catch(e){msg("ما انحفظ، تأكد من الإنترنت")}}
@@ -281,7 +281,7 @@ function pinAsk(cb){var o=document.createElement("div");o.style.cssText="positio
  b[0].onclick=go;b[1].onclick=function(){o.remove()};i.onkeydown=function(e){if(e.key=="Enter")go()};document.body.appendChild(o);i.focus()}
 
 /* ===== ملف المجهز (الاسم، الواتساب، المستودع) يوصل للمدير ===== */
-async function profPut(){if(!CFG.t||!CFG.name)return;var id=pinH(CFG.name).toString(36),p="people/"+id+".json",o={n:CFG.name,ph:CFG.ph||"",wh:CFG.whn||"",at:Date.now()};try{var ex=await getF(p);if(ex&&ex.data.ph==o.ph&&ex.data.wh==o.wh&&ex.data.n==o.n)return;await putF(p,o,ex?ex.sha:null,"بيانات المجهز")}catch(e){}}
+async function profPut(){if(!CFG.t||!CFG.name)return;var id=pinH(CFG.name).toString(36),p="people/"+id+".json",o={n:CFG.name,ph:CFG.ph||"",wh:CFG.whn||"",at:Date.now()};try{var ex=await getF(p);if(ex&&ex.data.n==o.n&&ex.data.wh&&o.wh&&ex.data.wh!=o.wh&&Date.now()-(ex.data.at||0)<3*86400000){NMDUP=ex.data.wh;try{localStorage.setItem('stf_nmdup',NMDUP)}catch(e){}}else if(ex&&ex.data.wh==o.wh){NMDUP='';try{localStorage.removeItem('stf_nmdup')}catch(e){}}if(ex&&ex.data.ph==o.ph&&ex.data.wh==o.wh&&ex.data.n==o.n)return;await putF(p,o,ex?ex.sha:null,"بيانات المجهز")}catch(e){}}
 
 /* ===== شرح «❓ شلون» + دليل أول مرة ===== */
 var HELP={jobs:["📦 للتجهيز","هنا الفواتير اللي لازم تجهزها.","اضغط على الفاتورة تنفتح، وبعدين اضغط على كل صنف لما تجهزه فيصير ✅.","إذا خلصت كلشي اضغط «✓ تم تجهيز الكل».","🚚 إذا صنف ناقص عندك: اضغط «ناقص عندي؟ اطلبه من مستودع ثاني».","📷 صوّر وصل النقليات وارفقه بالفاتورة.","🖨 تكدر تطبع الفاتورة للسائق أو الزبون."],
@@ -301,10 +301,10 @@ function xToday(){return xYmd(Date.now())}
 function xAdd(d,n){var x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return xYmd(x.getTime())}
 function xWd(d){return XWD[new Date(d+"T12:00:00").getDay()]}
 function xDay(t){return t.d||xYmd(t.at)}
-function xLock(){return ((PERM.lock||{})[CFG.name])||((CUD[CFG.name]||{}).lock)||""}
+function xLock(){return ((PERM.lock||{})[BXK()])||((CUD[BXK()]||{}).lock)||""}
 function xLocked(d){var l=xLock();return !!(l&&d<=l)}
 function xLive(t){return t.status=="new"||t.status=="ok"}
-boxBal=function(){var cu=CUD[CFG.name]||{},b={IQD:cu.IQD||0,USD:cu.USD||0};
+boxBal=function(){var cu=CUD[BXK()]||{},b={IQD:cu.IQD||0,USD:cu.USD||0};
  if(cu.pxa){var P=cu.pxa;myXP().forEach(function(t){if(xLive(t))b[t.cur]-=t.amt;var r=P[t.id];if(r)b[r[1]]+=r[0]})}
  else{var px=cu.px||[];myXP().forEach(function(t){if(t.status=="new"&&px.indexOf(t.id)<0)b[t.cur]-=t.amt})}return b};
 function xOpts(A,v){return '<option value="">— اختار الحساب —</option>'+A.map(function(a){return '<option value="'+E(a.c)+'"'+(a.c==v?" selected":"")+'>'+E(a.n)+'</option>'}).join("")}
@@ -336,7 +336,7 @@ vExp=function(){var A=PERM.acc||[],T=xToday(),d=XD||T,lk=xLock(),locked=xLocked(
 function xEdit(id){var t=(XP[id]||{}).data;if(!t)return;XE=id;XEF={m:String(t.amt),a:t.acc,c:t.cur,n:t.nt||""};render()}
 xPhoto=function(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);i.onchange=function(){var f=i.files&&i.files[0];i.remove();if(f)phShrink(f).then(function(u){CPH=u;render()})};i.click()};
 xSend=async function(){var d=XD||xToday();if(xLocked(d)){msg("الصفحة متطابقة، ما تنضاف عليها");return}var ac=XF.a,a=parseFloat(XF.m),cur=XF.c||"IQD",A=(PERM.acc||[]).filter(function(x){return x.c==ac})[0];if(!(a>0)){msg("اكتب المبلغ");return}if(!A){msg("اختار الحساب");return}
- var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),d:d,by:CFG.name,wh:CFG.whn||"",acc:A.c,accn:A.n,amt:a,cur:cur,nt:(XF.n||"").trim(),status:"new",v:0};if(window.XBUSY)return;window.XBUSY=1;msg("⏳ جاري التسجيل...");
+ var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),d:d,by:BXK(),who:CFG.name,wh:CFG.whn||"",acc:A.c,accn:A.n,amt:a,cur:cur,nt:(XF.n||"").trim(),status:"new",v:0};if(window.XBUSY)return;window.XBUSY=1;msg("⏳ جاري التسجيل...");
  try{if(CPH){var p="photos/exp-"+id+".jpg",r=await api("PUT",p,{message:"صورة صرف",content:CPH.split(",")[1]});if(r.ok){o.ph=p;PH[p]=CPH}}var sha=await putF("exp/"+id+".json",o,null,"صرف "+A.n);XP[id]={sha:sha,data:o};localStorage.setItem("stf_xp",JSON.stringify(XP));CPH="";XF={m:"",a:"",c:cur,n:""};msg("✅ انضاف: "+A.n+" "+nf(a,cur)+" "+CN(cur));window.XBUSY=0;render()}
  catch(e){window.XBUSY=0;msg(e==401||e==403?"رمز الربط ما يسمح بالكتابة":"ما انسجل، تأكد من الإنترنت")}};
 async function xSave(id){var F=XEF,a=parseFloat(F.m),A=(PERM.acc||[]).filter(function(x){return x.c==F.a})[0],cur=F.c||"IQD",nt=(F.n||"").trim();if(!(a>0)){msg("اكتب المبلغ");return}if(!A){msg("اختار الحساب");return}msg("⏳ جاري الحفظ...");
@@ -435,7 +435,7 @@ async function siSave(mode){if(SIB)return;var S=SI,rows=S.rows.filter(function(r
  if(rows.some(function(r){return !(r.pr>0)})){msg("اكو مادة بدون سعر");return}var T=siTot();if(T.d<0||T.d>T.g){msg("الخصم غلط");return}
  var cn=S.cn.trim(),c=shCus(cn),pd=cn?Math.max(0,parseFloat(S.paid)||0):T.net;if(cn&&pd>T.net){msg("الواصل أكثر من الصافي");return}
  var cust=cn?{n:cn,ph:c?(c.ph||""):(S.ph||"").trim()}:null;if(c)cust.id=c.id;SIB=1;msg("⏳ جاري الحفظ...");
- try{if(!S.id){var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:CFG.name,wh:CFG.wh,whn:CFG.whn||"",it:S.it,cust:cust,cid:c?c.id:"",rows:rows,disc:T.d,paid:pd,nt:(S.nt||"").trim(),status:"new",v:0};
+ try{if(!S.id){var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),o={id:id,at:Date.now(),by:BXK(),who:CFG.name,wh:CFG.wh,whn:CFG.whn||"",it:S.it,cust:cust,cid:c?c.id:"",rows:rows,disc:T.d,paid:pd,nt:(S.nt||"").trim(),status:"new",v:0};
    var sha=await putF(shPath(o),o,null,"فاتورة محل");SL[id]={sha:sha,data:o};SI.id=id;SI.at=o.at}
   else{var p=shPath(SL[S.id].data),r=await upd(p,function(f){if(shLocked(f))throw "lock";if(f.status=="del")throw "del";f.it=S.it;f.cust=cust;f.cid=c?c.id:(f.cust&&f.cid&&f.cust.n==cn?f.cid:"");f.rows=rows;f.disc=T.d;f.paid=pd;f.nt=(S.nt||"").trim();f.v=(f.v||0)+1;f.ed=Date.now()});SL[S.id]={sha:r.sha,data:r.data}}
   localStorage.setItem("stf_sl",JSON.stringify(SL));SIB=0;var sid=SI.id;msg("✅ انحفظت — تنسجل عند المدير خلال دقيقة");V="sale";SI=null;SIX=-1;render();scrollTo(0,0);if(mode=="p")siPrint(sid);else if(mode=="w")siWa(sid)}
@@ -558,7 +558,7 @@ function tRecvGo(id){var t=(T[id]||{}).data;if(!t)return;var rc={},bad=0;t.rows.
  TRC="";var n=Object.keys(rc).length;return tPut(id,function(f){if(f.status!="sent")return;f.status="recv";f.recvBy=CFG.name;f.recvAt=Date.now();if(n)f.rc=rc},n?"✅ تم الاستلام — انسجل فرق بـ"+n+" صنف عند المدير":"✅ تم الاستلام")}
 
 /* ===== رقم نسخة تطبيق المجهزين + يتحدث وحده إذا اكو نسخة أحدث ===== */
-var STF_VER="v98";
+var STF_VER="v99";
 function stfVN(v){return parseInt(String(v||"").replace(/\D/g,""))||0}
 var _render41=render;render=function(){var r=_render41.apply(this,arguments);try{var w=$("who");if(w&&w.textContent.indexOf(STF_VER)<0)w.insertAdjacentHTML("beforeend",' <small style="opacity:.7;font-size:11px">· '+STF_VER+'</small>')}catch(e){}return r};
 async function stfUpdChk(){try{var r=await fetch("./index.html?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;var t=await r.text(),v=(t.match(/STF_VER="([^"]+)"/)||[])[1];if(!v||stfVN(v)<=stfVN(STF_VER))return;
@@ -633,6 +633,30 @@ async function shJobKill(t){try{var fr=await getF(shPath(t)),no=(fr&&fr.data&&fr
 var _siDel48=siDel;siDel=async function(){var t=SI&&SL[SI.id]&&SL[SI.id].data;await _siDel48.apply(this,arguments);var t2=t&&SL[t.id]&&SL[t.id].data;if(t2&&t2.status=="del"){await shJobKill(t2);render()}};
 /* الطلبات المحذوفة ما تبين بالتجهيز أبداً */
 var _vJobs48=vJobs;vJobs=function(){var H={};Object.keys(J).forEach(function(k){var d=J[k]&&J[k].data;if(d&&d.del){H[k]=J[k];delete J[k]}});try{return _vJobs48.apply(this,arguments)}finally{Object.keys(H).forEach(function(k){J[k]=H[k]})}};
+
+/* ===== نفس الاسم بجهازين بمستودعات مختلفة = نفس الصندوق — تنبيه واضح ===== */
+var NMDUP=(function(){try{return localStorage.getItem('stf_nmdup')||''}catch(e){return ''}})();
+/* ===== تطبيق المحل: الأرصدة تتحدث فوراً بالوصولات اللي بعدها ما ثبتها المدير ===== */
+function shAdj(){if(!shopOK())return null;var C={},box=0,n=0;Object.keys(SL).forEach(function(k){var t=SL[k]&&SL[k].data;if(!t||t.wh!=CFG.wh)return;var sg=0,AP=SC&&SC.ap;if(AP){var has=Object.prototype.hasOwnProperty.call(AP,t.id);if(t.status=="del"){if(has)sg=-1}else if(!has&&!(t.no&&(t.pv||0)==(t.v||0)))sg=1}else{var ap=t.no&&(t.pv||0)==(t.v||0);if(t.status=="del"){if(t.no&&!ap)sg=-1}else if(!t.no)sg=1}if(!sg)return;
+  var nt=shNet(t).net,pd=+t.paid||0,s=(t.it=="sret"?-1:1)*sg,cn=t.cust&&t.cust.n;if(cn){C[cn]=(C[cn]||0)+s*(nt-pd);box+=s*pd}else box+=s*nt;n++});return n?{C:C,box:box,n:n}:null}
+var _render49=render;render=function(bg){var A=null;try{A=shAdj()}catch(e){}var sc=SC,cd=CUD;
+ if(A){try{var S2=JSON.parse(JSON.stringify(SC||{}));S2.cus=S2.cus||[];Object.keys(A.C).forEach(function(nm){var c=S2.cus.filter(function(x){return x.n==nm})[0];if(c)c.b=(c.b||0)+A.C[nm];else S2.cus.push({id:"p_"+nm,n:nm,b:A.C[nm],ph:"",pend:1})});var D2=JSON.parse(JSON.stringify(CUD||{}));D2[BXK()]=D2[BXK()]||{};D2[BXK()].IQD=((SC&&SC.bx&&SC.bx[BXK()]!=null)?SC.bx[BXK()]:(D2[BXK()].IQD||0))+A.box;SC=S2;CUD=D2}catch(e){SC=sc;CUD=cd}}
+ try{var r=_render49.apply(this,arguments)}finally{SC=sc;CUD=cd}
+ try{var w=$("who");if(w){if(A&&!document.getElementById("shpend")){var d=document.createElement("div");d.id="shpend";d.style.cssText="font-size:12px;color:#b8892b";w.parentNode.appendChild(d)}var d2=document.getElementById("shpend");if(d2)d2.textContent=A?"⏳ "+A.n+" وصل بانتظار المدير — الأرصدة محسوبة وياها":"";
+  var nd=document.getElementById("nmdup");if(NMDUP&&!nd){nd=document.createElement("div");nd.id="nmdup";nd.style.cssText="background:#c0392b;color:#fff;font-size:13px;padding:6px 10px;border-radius:8px;margin:6px 0";w.parentNode.appendChild(nd)}if(nd)nd.textContent=NMDUP?"⚠️ اسمك «"+CFG.name+"» مستخدم هم بجهاز «"+NMDUP+"» — الصندوق والمصاريف تصير مشتركة. كل شخص لازم اسمه يختلف (⚙ الإعدادات).":"";if(nd&&!NMDUP)nd.remove()}}catch(e){}
+ return r};
+
+/* ===== الصندوق والمصاريف والقبض باسم المستودع مو باسم الموظف ===== */
+function BXK(){return (CFG.whn&&!allW())?"مستودع "+CFG.whn:CFG.name}
+
+/* ===== تأشير طلب مؤقت والمدير يحوّله بنفس اللحظة: التأشيرة ما تضيع ===== */
+var _tick51=tick;tick=async function(no,id){var r=await _tick51.apply(this,arguments);if(String(no).indexOf("t-")!=0)return r;
+ try{var want=J[no]&&J[no].data&&J[no].data.st&&J[no].data.st[id];if(!want)return r;await new Promise(function(o){setTimeout(o,1200)});
+  var sid=String(no).slice(2),ex=await getF("jobs/"+no+".json");
+  if(ex&&ex.data&&!ex.data.closed){var cur=ex.data.st&&ex.data.st[id];if(!cur||!!cur.ok!=!!want.ok)await upd("jobs/"+no+".json",function(f){f.st=f.st||{};f.st[id]=want});return r}
+  var t=SL[sid]&&SL[sid].data,fr=t?await getF(shPath(t)):null,n2=fr&&fr.data&&fr.data.no;if(!n2)return r;
+  var j=await getF("jobs/"+n2+".json");if(j&&j.data&&!j.data.closed){var c2=j.data.st&&j.data.st[id];if(!c2||!!c2.ok!=!!want.ok){var u=await upd("jobs/"+n2+".json",function(f){f.st=f.st||{};f.st[id]=want});J[String(n2)]={sha:u.sha,data:u.data};delete J[no];localStorage.setItem("stf_j",JSON.stringify(J));render()}}}catch(e){}
+ return r};
 
 /* تنزيل التطبيق على الشاشة */
 var SA0=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,AIN=/[?&]a=1/.test(location.search);if(AIN)try{localStorage.setItem("stf_inst","1")}catch(e){}
